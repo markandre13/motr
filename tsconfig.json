@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "target": "esnext",
+        "module": "NodeNext",
+        "traceResolution": false,
+        "baseUrl": "src",
+        "paths": {
+            "src/*": [
+                "src/*"
+            ],
+        },
+        "incremental": false,
+        "experimentalDecorators": true,
+        "downlevelIteration": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "allowJs": false,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "sourceMap": true,
+    },
+    "include": [
+        "src/**/*.ts",
+        "test/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
