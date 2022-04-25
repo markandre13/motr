@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "dist",
+        "outDir": "lib",
         "target": "esnext",
         "module": "NodeNext",
         "traceResolution": false,
@@ -19,6 +19,7 @@
         "noImplicitAny": true,
         "noImplicitOverride": true,
         "sourceMap": true,
+        "noEmitOnError": true
     },
     "include": [
         "src/**/*.ts",

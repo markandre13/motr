@@ -9,7 +9,7 @@ This is a Proof of Concept (as of now) for a simple and stupid re-implementation
 * I love WTR
 * WTR's implementation is not simple and stupid
 * WTR sometimes freezes for several minutes on macOS
-* I'd like to extend the mocha reporter
+* I'd like to extend the mocha reporter protocol
 * I'd like to run the Typescript compiler and WTR both in watch mode in the same terminal within Visual Studio Code
 
 ## How?

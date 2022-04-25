@@ -12,8 +12,10 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --enable-source-maps lib/src/motr.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:build": "tsc -w",
+    "update": "npx npm-check-updates -u && npm install"
   },
   "dependencies": {
     "@esm-bundle/chai": "^4.3.4-fix.0",
