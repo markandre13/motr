@@ -25,10 +25,10 @@ describe("Demonstration", function () {
 })
 
 function sleep(milliseconds: number) {
-    console.log(`begin sleep ${milliseconds}`)
+    // console.log(`begin sleep ${milliseconds}`)
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            console.log(`end sleep ${milliseconds}`)
+            // console.log(`end sleep ${milliseconds}`)
             resolve('success')
         }, milliseconds)
     })

@@ -80,17 +80,11 @@ class Reporter {
     }
 
     report(type: string, data: any) {
-        console.log(`MOTO REPORT ${type}`)
+        // console.log(`MOTO REPORT ${type}`)
         try {
             let xhr = new XMLHttpRequest()
             xhr.open("POST", `/report/${type}`)
             xhr.timeout = 100 // FIXME: required to avoid blocking when async & await is used in tests
-            // xhr.onload = () => {
-            //     console.log(`close /report/${type}`)
-            // }
-            // xhr.ontimeout = (e) => {
-            //     console.log(`timeout /report/${type}`)
-            // }
             xhr.setRequestHeader("Content-Type", "application/json")
             xhr.send(JSON.stringify(data))
 
@@ -119,3 +113,5 @@ class Reporter {
         this._indents--
     }
 }
+
+export default Reporter

@@ -48,26 +48,24 @@ export async function launchHTTPD(appdir: string) {
         }
 
         if (path == "/") {
-            let reporter = fs.readFileSync(`${appdir}/lib/src/reporter.js`).toString()
-            reporter = reporter.substring(0, reporter.lastIndexOf("export"))
             const content = `<!DOCTYPE html>
 <html>
 
 <head>
     <title>@13/test-runner</title>
     <link rel="stylesheet" type="text/css" href="/motr/node_modules/mocha/mocha.css">
-    <script src="/motr/node_modules/source-map-support/browser-source-map-support.js"></script>
     <script src="/motr/node_modules/mocha/mocha-es2018.js"></script>
+    <script src="/motr/node_modules/source-map-support/browser-source-map-support.js"></script>
     <script>
         sourceMapSupport.install()
-        ${reporter}
     </script>   
 </head>
 
 <body>
     <div id="mocha"></div>
     <script type="module" class="mocha-init">
-        mocha.setup({ui: 'bdd', reporter: Reporter})
+        let reporter = await import("/motr/lib/src/reporter.js")
+        mocha.setup({ui: 'bdd', reporter: reporter.default})
         mocha.checkLeaks()
         await import("/${file}")
         mocha.run()
@@ -102,7 +100,7 @@ export async function launchHTTPD(appdir: string) {
         if (fileSuffix === "js") {
             // console.log(`Rewrite JS file '${path}'`)
             if (path.endsWith(".spec.js")) {
-                str = str.replace(/@esm-bundle\/chai/g, "./../../node_modules/@esm-bundle/chai/esm/chai.js")
+                str = str.replace(/@esm-bundle\/chai/g, "/motr/node_modules/@esm-bundle/chai/esm/chai.js")
                 content = Buffer.from(str)
             }
         }
