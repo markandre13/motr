@@ -18,7 +18,7 @@ let numSkippedTests = 0
 const slow = 75
 
 const config = {
-    headless: true
+    headless: false
 }
 
 interface Error {
@@ -48,6 +48,7 @@ for(let i=0; i<3; ++i) {
     appdir = appdir.substring(0, appdir.lastIndexOf("/"))
 }
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] MOTR`)
+
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Starting Typescript daemon`)
 launchTypeScript()
 
@@ -113,6 +114,8 @@ fs.watch(watchDirectory, { recursive: true }, (type: string, filename: string) =
             if (page !== undefined) {
                 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Reload ${watchDirectory}/${filename} ...`)
 
+                allSuiteAndTests.clear()
+
                 totalDuration = 0
                 startTime = 0
                 endTime = 0
@@ -125,6 +128,7 @@ fs.watch(watchDirectory, { recursive: true }, (type: string, filename: string) =
                 numSkippedTests = 0
 
                 page!.reload()
+                start()
             }
         } break
     }
@@ -179,7 +183,7 @@ export function stop() {
     if (numPassedTests !== 0 || numSkippedTests !== 0 || numFailedTests !== 0) {
         console.log()
     }
-    console.log(`${color.green}Finished ${numTotalTests} tests in ${numTotalTestSuites} test suites in ${duration()}`)
+    console.log(`${color.green}Finished ${numTotalTests} tests in ${numTotalTestSuites} test suites in ${duration()}${color.reset}`)
     console.log()
     if (numPassedTests !== 0 || numSkippedTests !== 0 || numFailedTests !== 0) {
         console.log(`${color.boldWhite}${color.underline}SUMMARY:${color.reset}`)

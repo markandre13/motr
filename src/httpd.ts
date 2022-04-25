@@ -55,22 +55,23 @@ export async function launchHTTPD(appdir: string) {
 
 <head>
     <title>@13/test-runner</title>
-    <script src="/motr/node_modules/source-map-support/browser-source-map-support.js"></script>
-    <script>sourceMapSupport.install();</script>
-    <script src="/motr/node_modules/mocha/mocha-es2018.js"></script>
     <link rel="stylesheet" type="text/css" href="/motr/node_modules/mocha/mocha.css">
+    <script src="/motr/node_modules/source-map-support/browser-source-map-support.js"></script>
+    <script src="/motr/node_modules/mocha/mocha-es2018.js"></script>
+    <script>
+        sourceMapSupport.install()
+        ${reporter}
+    </script>   
 </head>
 
 <body>
     <div id="mocha"></div>
-    <script>
-    mocha.setup('bdd')
-
-    ${reporter}
-
-    mocha.reporter(Reporter)
+    <script type="module" class="mocha-init">
+        mocha.setup({ui: 'bdd', reporter: Reporter})
+        mocha.checkLeaks()
+        await import("/${file}")
+        mocha.run()
     </script>
-    <script onload="mocha.run()" type="module" src="/${file}"></script>
 </body>
 
 </html>`
@@ -89,7 +90,9 @@ export async function launchHTTPD(appdir: string) {
             content = fs.readFileSync(path)
         }
         catch (error) {
-            console.log(`httpd: failed to serve '${path}'`)
+            if (path != "favicon.ico") {
+                console.log(`httpd: failed to serve '${path}'`)
+            }
             res.writeHead(404)
             res.end()
             return

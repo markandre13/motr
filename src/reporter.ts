@@ -22,8 +22,8 @@ class Reporter {
         const stats = runner.stats
         runner
             .once(EVENT_RUN_BEGIN, () => {
-                this.report(EVENT_RUN_BEGIN, {})
-                console.log('start')
+                // this.report(EVENT_RUN_BEGIN, {})
+                console.log('MOTO REPORTER START')
             })
             .on(EVENT_SUITE_BEGIN, () => {
                 // this.report(EVENT_RUN_BEGIN, {})
@@ -80,17 +80,30 @@ class Reporter {
     }
 
     report(type: string, data: any) {
+        console.log(`MOTO REPORT ${type}`)
         try {
-            fetch(`/report/${type}`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-        }
-        catch(error) {
+            let xhr = new XMLHttpRequest()
+            xhr.open("POST", `/report/${type}`)
+            xhr.timeout = 100 // FIXME: required to avoid blocking when async & await is used in tests
+            // xhr.onload = () => {
+            //     console.log(`close /report/${type}`)
+            // }
+            // xhr.ontimeout = (e) => {
+            //     console.log(`timeout /report/${type}`)
+            // }
+            xhr.setRequestHeader("Content-Type", "application/json")
+            xhr.send(JSON.stringify(data))
 
+            // fetch(`/report/${type}`, {
+            //     method: "POST",
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify(data)
+            // })
+        }
+        catch (error) {
+            console.log(`failed to report ${type}: ${(error as Error).message}`)
         }
     }
 
