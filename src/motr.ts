@@ -18,7 +18,7 @@ let numSkippedTests = 0
 const slow = 75
 
 const config = {
-    headless: false
+    headless: true
 }
 
 interface Error {

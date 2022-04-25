@@ -80,14 +80,23 @@ export async function launchHTTPD(appdir: string) {
         }
         path = path.substring(1)
 
-        const fileSuffix = path.substring(path.lastIndexOf(".") + 1)
-        const contentType = types[fileSuffix]
-
         let content
         try {
             content = fs.readFileSync(path)
         }
         catch (error) {
+        }
+        if (content === undefined) {
+            try {
+                content = fs.readFileSync(path+".js")
+            }
+            catch (error) {
+            }
+            if (content !== undefined) {
+                path = path+".js"
+            }
+        }
+        if (content === undefined) {
             if (path != "favicon.ico") {
                 console.log(`httpd: failed to serve '${path}'`)
             }
@@ -96,13 +105,31 @@ export async function launchHTTPD(appdir: string) {
             return
         }
 
+        const fileSuffix = path.substring(path.lastIndexOf(".") + 1)
+        const contentType = types[fileSuffix]
+
         let str = content.toString()
         if (fileSuffix === "js") {
             // console.log(`Rewrite JS file '${path}'`)
-            if (path.endsWith(".spec.js")) {
+            // if (path.endsWith(".spec.js")) {
                 str = str.replace(/@esm-bundle\/chai/g, "/motr/node_modules/@esm-bundle/chai/esm/chai.js")
+                str = str.replace(/"@toad"/g, `"/lib/src/index.js"`)
+                str = str.replace(/'@toad'/g, `'/lib/src/index.js'`)
+                str = str.replace(/"@toad\//g, `"/lib/src/`)
+                str = str.replace(/'@toad\//g, `'/lib/src/`)
+
+                str = str.replace(/"src\//g, `"/lib/src/`)
+                str = str.replace(/'src\//g, `'/lib/src/`)
+
+                str = str.replace(/"toad.jsx"/g, `"/node_modules/toad.jsx/lib/jsx-runtime.js"`)
+                str = str.replace(/'toad.jsx'/g, `"/node_modules/toad.jsx/lib/jsx-runtime.js"`)
+                str = str.replace(/"toad.jsx\/lib\/jsx-runtime"/g, `"/node_modules/toad.jsx/lib/jsx-runtime.js"`)
+                str = str.replace(/'toad.jsx\/lib\/jsx-runtime'/g, `"/node_modules/toad.jsx/lib/jsx-runtime.js"`)
+
+                // console.log(str)
+
                 content = Buffer.from(str)
-            }
+            // }
         }
 
         if (contentType) {
