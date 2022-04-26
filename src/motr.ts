@@ -7,11 +7,36 @@ import { launchHTTPD } from './httpd.js'
 import * as http from "http"
 import {
     server as WebSocketServer,
-    client as WebSocketClient,
     request as WebSocketRequest,
     connection as WebSocketConnection,
     Message
 } from "websocket"
+
+let watch
+const testSuffix = ".spec.js"
+const watchDirectory = "lib/test"
+
+const config = {
+    headless: false
+}
+
+const argv = process.argv
+let i
+for (i = 2; i < argv.length; ++i) {
+    switch (argv[i]) {
+        case "-w":
+        case "--watch":
+            if (i + 1 >= argv.length) {
+                console.log(`Not enough arguments for ${argv[i]}`)
+                process.exit(1)
+            }
+            watch = argv[++i]
+            break
+        default:
+            console.log(`Unknown option ${argv[i]}`)
+            process.exit(1)
+    }
+}
 
 let totalDuration = 0
 let startTime = 0
@@ -26,10 +51,7 @@ let numSkippedTests = 0
 
 const slow = 75
 
-const config = {
-    headless: false
-}
-
+// Mocha
 interface Error {
     name: string
     message: string
@@ -39,6 +61,7 @@ interface Error {
     stack: any
 }
 
+// Mocha
 interface Test {
     state: "failed" | "passed" | "pending"
     duration: number
@@ -47,6 +70,13 @@ interface Test {
     body: string
     err: any
     error: Error
+
+    // MOTR special
+    xtra?: Extra
+}
+
+interface Extra {
+    msg?: string
 }
 
 type SuiteAndTestMap = Map<string, SuiteAndTestMap | Test>
@@ -119,9 +149,9 @@ const browser = await puppeteer.launch({
     devtools: true
 })
 
-const watchDirectory = "lib/test"
 
-console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Scanning directory ${watchDirectory} for *.spec.js ...`)
+
+console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Scanning directory ${watchDirectory} for *${testSuffix} ...`)
 
 // find all *.spec.js files
 const pages = new Map<string, puppeteer.Page>()
@@ -135,27 +165,33 @@ async function scanDirectory(path: string) {
             continue
         }
         if (stat.isFile()) {
-            if (filename.endsWith(".spec.js")) {
-                // if (filename != "lib/test/view/TextArea.spec.js") {
-                //     continue
-                // }
-                console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Loading ${filename}`)
-                const page = await browser.newPage()
-                page.setDefaultNavigationTimeout(0)
-                const uri = `http://localhost:${port}/?file=${encodeURIComponent(filename)}`
-                try {
-                    await page.goto(uri)
-                    pages.set(filename, page)
-                }
-                catch (error) {
-                    const e = error as Error
-                    console.log(`[${color.red}${getLocaleTimeString()}${color.reset}] Failed to open ${uri}: ${e.message}`)
-                }
+            if (filename.endsWith(testSuffix)) {
+                loadTest(filename)
             }
         }
     }
 }
-await scanDirectory(watchDirectory)
+
+async function loadTest(filename: string) {
+    console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Loading ${filename}`)
+    const page = await browser.newPage()
+    page.setDefaultNavigationTimeout(0)
+    const uri = `http://localhost:${port}/?file=${encodeURIComponent(filename)}`
+    try {
+        await page.goto(uri)
+        pages.set(filename, page)
+    }
+    catch (error) {
+        const e = error as Error
+        console.log(`[${color.red}${getLocaleTimeString()}${color.reset}] Failed to open ${uri}: ${e.message}`)
+    }
+}
+
+if (watch !== undefined) {
+    await loadTest(watch)
+} else {
+    await scanDirectory(watchDirectory)
+}
 
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Watching for changes in directory ${watchDirectory} ...`)
 
@@ -305,6 +341,11 @@ function reportAllSuitesAndTests(suiteInfo: SuiteAndTestMap, indent = "") {
             ++numTotalTests
             totalDuration += test.duration
             console.log(`${indent}${getStatus(test.state, name)}${getDuration(test.duration)}`)
+            if (test.xtra?.msg) {
+                const n0 = indent + "    "
+                const n1 = "\n" + n0
+                console.log(n0 + test.xtra.msg.replace("\n", n1))
+            }
         }
     })
 }

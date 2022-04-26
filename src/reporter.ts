@@ -94,7 +94,8 @@ class Reporter {
                     retries: test.retries(),
                     type: test.type,
                     titlePath: test.titlePath(),
-                    body: test.body
+                    body: test.body,
+                    xtra: (test as any).xtra
                 })
                 // console.log(x)
                 console.log(`${this.indent()}pass: ${test.fullTitle()}`)
@@ -108,6 +109,7 @@ class Reporter {
                     type: test.type,
                     titlePath: test.titlePath(),
                     body: test.body,
+                    xtra: (test as any).xtra
                 })
                 console.log(
                     `${this.indent()}fail: ${test.fullTitle()} - error: ${err.message}`
