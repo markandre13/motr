@@ -1,6 +1,5 @@
 import * as fs from "fs"
 import * as http from "http"
-import { start, oneDone, stop } from './motr.js'
 
 export async function launchHTTPD(appdir: string) {
 
@@ -16,32 +15,6 @@ export async function launchHTTPD(appdir: string) {
         const url = new URL(`http://dummy${req.url}`)
         const file = url.searchParams.get("file")
         let path = url.pathname
-
-        if (path.startsWith("/report/")) {
-            const event = path.substring(8)
-            const chunks: Buffer[] = []
-            req.on("data", chunk => chunks.push(chunk))
-
-            // Send the buffer or you can put it into a var
-            req.on("end", () => {
-                const data = Buffer.concat(chunks).toString()
-                // console.log(`EVENT: ${event} ${data}`)
-                switch (event) {
-                    case 'start':
-                        start()
-                        break
-                    case "pass":
-                    case "fail":
-                    case "pending":
-                        oneDone(JSON.parse(data))
-                        break
-                    case 'end':
-                        stop()
-                        break
-                }
-            })
-            return
-        }
 
         if (path.startsWith("/motr/")) {
             path = `/${appdir}${path.substring(5)}`
@@ -64,8 +37,9 @@ export async function launchHTTPD(appdir: string) {
 <body>
     <div id="mocha"></div>
     <script type="module" class="mocha-init">
-        let reporter = await import("/motr/lib/src/reporter.js")
-        mocha.setup({ui: 'bdd', reporter: reporter.default})
+        import Reporter from "/motr/lib/src/reporter.js"
+        await Reporter.connect()
+        mocha.setup({ui: 'bdd', reporter: Reporter})
         mocha.checkLeaks()
         await import("/${file}")
         mocha.run()

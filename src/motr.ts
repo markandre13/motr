@@ -4,6 +4,15 @@ import color from "./color.js"
 import { getLocaleTimeString, launchTypeScript } from './typescript.js'
 import { launchHTTPD } from './httpd.js'
 
+import * as http from "http"
+import {
+    server as WebSocketServer,
+    client as WebSocketClient,
+    request as WebSocketRequest,
+    connection as WebSocketConnection,
+    Message
+} from "websocket"
+
 let totalDuration = 0
 let startTime = 0
 let endTime = 0
@@ -18,7 +27,7 @@ let numSkippedTests = 0
 const slow = 75
 
 const config = {
-    headless: true
+    headless: false
 }
 
 interface Error {
@@ -44,7 +53,7 @@ type SuiteAndTestMap = Map<string, SuiteAndTestMap | Test>
 const allSuiteAndTests: SuiteAndTestMap = new Map<string, SuiteAndTestMap | Test>()
 
 let appdir = process.argv[1]
-for(let i=0; i<3; ++i) {
+for (let i = 0; i < 3; ++i) {
     appdir = appdir.substring(0, appdir.lastIndexOf("/"))
 }
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] MOTR`)
@@ -54,6 +63,54 @@ launchTypeScript()
 
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Starting HTTP daemon...`)
 const port = await launchHTTPD(appdir)
+
+function launchWebSocket() {
+    return new Promise<void>((resolve, reject) => {
+        const serverSocket = http.createServer()
+        const wss = new WebSocketServer({
+            httpServer: serverSocket,
+            autoAcceptConnections: true // FIXME: this is a security issue?
+        })
+        wss.on("request", (request: WebSocketRequest) => {
+            request.accept()
+            console.log(`accepted connection from ${request.host}`)
+        })
+        wss.on("connect", (wsConnection: WebSocketConnection) => {
+            // wsConnection.on("error", (error: Error) => { orb.socketError(connection, error) })
+            wsConnection.on("close", (code: number, desc: string) => {
+                console.log(`WebSocket Close ${code} ${desc}`)
+            })
+            wsConnection.on("message", (message: Message) => {
+                switch (message.type) {
+                    case "binary":
+                        const b = message.binaryData
+                        break
+                    case "utf8":
+                        const msg = JSON.parse(message.utf8Data)
+                        switch (msg.type) {
+                            case 'start':
+                                start()
+                                break
+                            case "pass":
+                            case "fail":
+                            case "pending":
+                                oneDone(msg.data)
+                                break
+                            case 'end':
+                                stop()
+                                break
+                        }
+                        break
+                }
+            })
+        })
+        serverSocket.listen(8080, () => resolve())
+    })
+}
+console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Starting WebSocket...`)
+await launchWebSocket()
+
+// throw Error()
 
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Starting web browser...`)
 const browser = await puppeteer.launch({
@@ -90,7 +147,7 @@ async function scanDirectory(path: string) {
                     await page.goto(uri)
                     pages.set(filename, page)
                 }
-                catch(error) {
+                catch (error) {
                     const e = error as Error
                     console.log(`[${color.red}${getLocaleTimeString()}${color.reset}] Failed to open ${uri}: ${e.message}`)
                 }
@@ -119,10 +176,10 @@ fs.watch(watchDirectory, { recursive: true }, (type: string, filename: string) =
                 totalDuration = 0
                 startTime = 0
                 endTime = 0
-                
+
                 numTotalTests = 0
                 numTotalTestSuites = 0
-                
+
                 numPassedTests = 0
                 numFailedTests = 0
                 numSkippedTests = 0

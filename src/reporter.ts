@@ -18,6 +18,58 @@ const STATE_STOPPED = 'stopped'
 
 class Reporter {
     _indents = 0
+    static socket: WebSocket
+
+    static state() {
+        switch (this.socket.readyState) {
+            case WebSocket.CONNECTING:
+                return "CONNECTING"
+            case WebSocket.OPEN:
+                return "OPEN"
+            case WebSocket.CLOSING:
+                return "CLOSING"
+            case WebSocket.CLOSED:
+                return "CLOSED"
+            default:
+                return `${this.socket.readyState}`
+        }
+    }
+
+    static async connect() {
+        Reporter.socket = new WebSocket(`ws://localhost:8080`)
+        return new Promise<void>((resolve, reject) => {
+            Reporter.socket.binaryType = "arraybuffer"
+            Reporter.socket.onopen = () => {
+                Reporter.socket.onmessage = async (msg: MessageEvent) => {
+                    console.log("WEBSOCKET MESSAGE")
+                    if (msg.data instanceof Blob) {
+                        // orb.socketRcvd(connection, await msg.data.arrayBuffer())
+                    } else {
+                        // orb.socketRcvd(connection, msg.data)
+                    }
+                }
+                Reporter.socket.onerror = (event: Event) => {
+                    console.log("WEBSOCKET ERROR")
+                    console.log(event)
+                    // orb.socketError(connection, 
+                    //     new Error(`WebSocket connection error with ${socket.url}`)
+                    // )
+                }
+                Reporter.socket.onclose = (event: CloseEvent) => {
+                    console.log("WEBSOCKET CLOSE")
+                    console.log(event)
+                }
+                // resolve(connection)
+                resolve()
+            }
+            Reporter.socket.onerror = (event: Event) => {
+                console.log("WEBSOCKET ERROR DURING OPEN")
+                reject(new Error(`Failed to connect to ${Reporter.socket.url}`))
+                // throw Error(`Failed to connect to ${this.socket.url}`)
+            }
+        })
+    }
+
     constructor(runner: Mocha.Runner) {
         const stats = runner.stats
         runner
@@ -62,15 +114,12 @@ class Reporter {
                 )
             })
             .on(EVENT_TEST_PENDING, (test) => {
-                // Test#fullTitle() returns the suite name(s)
-                // prepended to the test title
                 this.report(EVENT_TEST_PENDING, {
                     state: test.state,
                     retries: test.retries(),
                     type: test.type,
                     titlePath: test.titlePath(),
                 })
-                // console.log(x)
                 console.log(`${this.indent()}pending: ${test.fullTitle()}`)
             })
             .once(EVENT_RUN_END, () => {
@@ -80,21 +129,8 @@ class Reporter {
     }
 
     report(type: string, data: any) {
-        // console.log(`MOTO REPORT ${type}`)
         try {
-            let xhr = new XMLHttpRequest()
-            xhr.open("POST", `/report/${type}`)
-            xhr.timeout = 100 // FIXME: required to avoid blocking when async & await is used in tests
-            xhr.setRequestHeader("Content-Type", "application/json")
-            xhr.send(JSON.stringify(data))
-
-            // fetch(`/report/${type}`, {
-            //     method: "POST",
-            //     headers: {
-            //         'Content-Type': 'application/json'
-            //     },
-            //     body: JSON.stringify(data)
-            // })
+            Reporter.socket.send(JSON.stringify({ type, data }))
         }
         catch (error) {
             console.log(`failed to report ${type}: ${(error as Error).message}`)
