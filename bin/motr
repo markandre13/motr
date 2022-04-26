@@ -1,2 +1,5 @@
-#!/usr/bin/env node
-require('../lib/src/motr.js')
+#!/usr/bin/env sh
+file=`readlink -f $0`
+bin=${file%/*}
+home=${bin%/*}
+exec node ${home}/lib/src/motr.js "$@"
