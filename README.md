@@ -21,3 +21,4 @@ This is a Proof of Concept (as of now) for a simple and stupid re-implementation
 * ECMAScript modules: TBD, just PoC now
 * watch mode: TBD, just PoC now
 * mocha reporter: TBD, just PoC now
+* access to puppeteer from the test running within the browser: TBD, just PoC now
