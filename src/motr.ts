@@ -3,7 +3,7 @@ import * as fs from "fs"
 import color from "./color.js"
 import { getLocaleTimeString, launchTypeScript } from './typescript.js'
 import { launchHTTPD } from './httpd.js'
-import {  Launcher }  from 'chrome-launcher'
+import { Launcher } from 'chrome-launcher'
 
 import * as http from "http"
 import {
@@ -131,8 +131,15 @@ function launchWebSocket() {
                                 stop()
                                 break
                             case 'console':
-                                console.log('LOG:', ...msg.data)
+                                console.log(`LOG ${msg.file}:`, ...msg.data)
                                 break
+                            case 'puppeteer': {
+                                console.log("puppeteer")
+                                const page = pages.get(msg.file)
+                                if (page !== undefined) {
+                                    page.mouse.click(10, 10)
+                                }
+                            } break
                         }
                         break
                 }
@@ -370,8 +377,10 @@ function reportFailedTests(suiteInfo: SuiteAndTestMap, path = "") {
             console.log(`    ${color.boldWhite}Expected:${color.green} ${test.error.expected}${color.reset}`)
             console.log(`    ${color.boldWhite}Actual  :${color.red} ${test.error.actual}${color.reset}`)
         }
-        const stack = test.error.stack.replace(/\n/g, "\n  ")
-        console.log(`  ${stack}`)
+        if ("stack" in test.error) {
+            const stack = test.error.stack.replace(/\n/g, "\n  ")
+            console.log(`  ${stack}`)
+        }
         console.log()
     })
 }

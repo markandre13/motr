@@ -39,13 +39,15 @@ class Reporter {
     }
 
     static consoleLog: any
+    static file: string
 
-    static async connect() {
+    static async connect(file: string) {
+        Reporter.file = file;
+        (window as any).motr = Reporter
         Reporter.socket = new WebSocket(`ws://localhost:8080`)
         return new Promise<void>((resolve, reject) => {
             Reporter.socket.binaryType = "arraybuffer"
             Reporter.socket.onopen = () => {
-
                 Reporter.consoleLog = console.log
                 console.log = function(...args: any[]) {
                     Reporter.consoleLog(...args)
@@ -144,7 +146,7 @@ class Reporter {
 
     static report(type: string, data: any) {
         try {
-            Reporter.socket.send(JSON.stringify({ type, data }))
+            Reporter.socket.send(JSON.stringify({ type, data, file: `${Reporter.file}`, version: 1 }))
         }
         catch (error) {
             console.log(`failed to report ${type}: ${(error as Error).message}`)

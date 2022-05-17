@@ -38,7 +38,7 @@ export async function launchHTTPD(appdir: string) {
     <div id="mocha"></div>
     <script type="module" class="mocha-init">
         import Reporter from "/motr/lib/src/reporter.js"
-        await Reporter.connect()
+        await Reporter.connect("${file}")
         mocha.setup({ui: 'bdd', reporter: Reporter})
         mocha.checkLeaks()
         await import("/${file}")
