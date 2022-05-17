@@ -130,6 +130,9 @@ function launchWebSocket() {
                             case 'end':
                                 stop()
                                 break
+                            case 'console':
+                                console.log('LOG:', ...msg.data)
+                                break
                         }
                         break
                 }

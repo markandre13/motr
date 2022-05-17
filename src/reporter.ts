@@ -38,13 +38,22 @@ class Reporter {
         }
     }
 
+    static consoleLog: any
+
     static async connect() {
         Reporter.socket = new WebSocket(`ws://localhost:8080`)
         return new Promise<void>((resolve, reject) => {
             Reporter.socket.binaryType = "arraybuffer"
             Reporter.socket.onopen = () => {
+
+                Reporter.consoleLog = console.log
+                console.log = function(...args: any[]) {
+                    Reporter.consoleLog(...args)
+                    Reporter.report("console", args)
+                }
+
                 Reporter.socket.onmessage = async (msg: MessageEvent) => {
-                    console.log("WEBSOCKET MESSAGE")
+                    Reporter.consoleLog("WEBSOCKET MESSAGE")
                     if (msg.data instanceof Blob) {
                         // orb.socketRcvd(connection, await msg.data.arrayBuffer())
                     } else {
@@ -52,21 +61,21 @@ class Reporter {
                     }
                 }
                 Reporter.socket.onerror = (event: Event) => {
-                    console.log("WEBSOCKET ERROR")
-                    console.log(event)
+                    Reporter.consoleLog("WEBSOCKET ERROR")
+                    Reporter.consoleLog(event)
                     // orb.socketError(connection, 
                     //     new Error(`WebSocket connection error with ${socket.url}`)
                     // )
                 }
                 Reporter.socket.onclose = (event: CloseEvent) => {
-                    console.log("WEBSOCKET CLOSE")
-                    console.log(event)
+                    Reporter.consoleLog("WEBSOCKET CLOSE")
+                    Reporter.consoleLog(event)
                 }
                 // resolve(connection)
                 resolve()
             }
             Reporter.socket.onerror = (event: Event) => {
-                console.log("WEBSOCKET ERROR DURING OPEN")
+                Reporter.consoleLog("WEBSOCKET ERROR DURING OPEN")
                 reject(new Error(`Failed to connect to ${Reporter.socket.url}`))
                 // throw Error(`Failed to connect to ${this.socket.url}`)
             }
@@ -78,7 +87,7 @@ class Reporter {
         runner
             .once(EVENT_RUN_BEGIN, () => {
                 // this.report(EVENT_RUN_BEGIN, {})
-                console.log('MOTO REPORTER START')
+                Reporter.consoleLog('MOTO REPORTER START')
             })
             .on(EVENT_SUITE_BEGIN, () => {
                 // this.report(EVENT_RUN_BEGIN, {})
@@ -91,7 +100,7 @@ class Reporter {
             .on(EVENT_TEST_PASS, (test) => {
                 // Test#fullTitle() returns the suite name(s)
                 // prepended to the test title
-                this.report(EVENT_TEST_PASS, {
+                Reporter.report(EVENT_TEST_PASS, {
                     state: test.state,
                     duration: test.duration,
                     retries: test.retries(),
@@ -101,10 +110,10 @@ class Reporter {
                     xtra: (test as any).xtra
                 })
                 // console.log(x)
-                console.log(`${this.indent()}pass: ${test.fullTitle()}`)
+                Reporter.consoleLog(`${this.indent()}pass: ${test.fullTitle()}`)
             })
             .on(EVENT_TEST_FAIL, (test, err) => {
-                this.report(EVENT_TEST_FAIL, {
+                Reporter.report(EVENT_TEST_FAIL, {
                     state: test.state,
                     duration: test.duration,
                     error: err,
@@ -114,26 +123,26 @@ class Reporter {
                     body: test.body,
                     xtra: (test as any).xtra
                 })
-                console.log(
+                Reporter.consoleLog(
                     `${this.indent()}fail: ${test.fullTitle()} - error: ${err.message}`
                 )
             })
             .on(EVENT_TEST_PENDING, (test) => {
-                this.report(EVENT_TEST_PENDING, {
+                Reporter.report(EVENT_TEST_PENDING, {
                     state: test.state,
                     retries: test.retries(),
                     type: test.type,
                     titlePath: test.titlePath(),
                 })
-                console.log(`${this.indent()}pending: ${test.fullTitle()}`)
+                Reporter.consoleLog(`${this.indent()}pending: ${test.fullTitle()}`)
             })
             .once(EVENT_RUN_END, () => {
-                this.report(EVENT_RUN_END, {})
-                console.log(`end: ${stats!.passes}/${stats!.passes + stats!.failures} ok`)
+                Reporter.report(EVENT_RUN_END, {})
+                Reporter.consoleLog(`end: ${stats!.passes}/${stats!.passes + stats!.failures} ok`)
             })
     }
 
-    report(type: string, data: any) {
+    static report(type: string, data: any) {
         try {
             Reporter.socket.send(JSON.stringify({ type, data }))
         }

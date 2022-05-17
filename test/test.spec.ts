@@ -16,6 +16,7 @@ The essence of eXtreme Programming`)
             expect(true).to.be.true
         })
         it("The Bad", function () {
+            console.log("What's up Doc?")
             expect(true).to.be.false
         })
         it("The Ugly")
