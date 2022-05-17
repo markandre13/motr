@@ -3,6 +3,7 @@ import * as fs from "fs"
 import color from "./color.js"
 import { getLocaleTimeString, launchTypeScript } from './typescript.js'
 import { launchHTTPD } from './httpd.js'
+import {  Launcher }  from 'chrome-launcher'
 
 import * as http from "http"
 import {
@@ -143,13 +144,12 @@ await launchWebSocket()
 // throw Error()
 
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Starting web browser...`)
+
 const browser = await puppeteer.launch({
-    executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    executablePath: Launcher.getFirstInstallation(),
     headless: config.headless,
     devtools: true
 })
-
-
 
 console.log(`[${color.grey}${getLocaleTimeString()}${color.reset}] Scanning directory ${watchDirectory} for *${testSuffix} ...`)
 

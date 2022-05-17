@@ -1,3 +1,6 @@
+// this is the mocha reporter running inside the browser
+// forwarding the test results via websocket
+
 const EVENT_HOOK_BEGIN = 'hook'
 const EVENT_HOOK_END = 'hook end'
 const EVENT_RUN_BEGIN = 'start'
