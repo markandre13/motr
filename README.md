@@ -2,7 +2,7 @@
 
 ![screenshot](screenshot.png)
 
-This is a Proof of Concept (as of now) for a simple and stupid re-implementation of [Web Test Runner](https://modern-web.dev/docs/test-runner/overview/) (WTR).
+This is a Proof of Concept (as of now) for a simple and stupid re-implementation of [Web Test Runner](https://modern-web.dev/docs/test-runner/overview/) (WTR) which only works on toad.js.
 
 ## Why?
 
